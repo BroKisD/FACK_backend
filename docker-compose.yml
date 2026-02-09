@@ -1,0 +1,98 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: my-app-postgres
+    environment:
+      POSTGRES_USER: appuser
+      POSTGRES_PASSWORD: apppassword
+      POSTGRES_DB: myapp_db
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U appuser"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - my-app-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: my-app-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - my-app-network
+
+  # Spring Boot Main Service
+  spring-main-service:
+    build:
+      context: ./spring-main-service
+      dockerfile: Dockerfile
+    container_name: my-app-spring-service
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/myapp_db
+      SPRING_DATASOURCE_USERNAME: appuser
+      SPRING_DATASOURCE_PASSWORD: apppassword
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./spring-main-service:/app
+    networks:
+      - my-app-network
+    restart: unless-stopped
+
+  # Node.js Recording Service
+  node-recording-service:
+    build:
+      context: ./node-recording-service
+      dockerfile: Dockerfile
+    container_name: my-app-node-service
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: docker
+      PORT: 3000
+      DATABASE_URL: postgresql://appuser:apppassword@postgres:5432/myapp_db
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./node-recording-service:/app
+      - /app/node_modules
+    networks:
+      - my-app-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  my-app-network:
+    driver: bridge
