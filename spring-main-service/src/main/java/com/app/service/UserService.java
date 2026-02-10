@@ -27,6 +27,25 @@ public class UserService {
         return convertToDTO(savedUser);
     }
 
+    // UPSERT - Update if exists by email, otherwise create
+    public UserDTO upsertUser(String name, String email) {
+        Optional<User> existingUser = userRepository.findByEmail(email);
+        
+        if (existingUser.isPresent()) {
+            // User exists, return their ID
+            return convertToDTO(existingUser.get());
+        } else {
+            // Create new student user
+            UserDTO newUser = new UserDTO();
+            newUser.setId(UUID.randomUUID().toString());
+            newUser.setName(name);
+            newUser.setEmail(email);
+            newUser.setRole("student");
+            newUser.setStatus("active");
+            return createUser(newUser);
+        }
+    }
+
     // READ - Get by ID
     public Optional<UserDTO> getUserById(String id) {
         return userRepository.findById(id)
