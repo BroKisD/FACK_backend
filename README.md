@@ -1,174 +1,245 @@
-# My App Backend
+# Spring Main Service
 
-A professional polyglot monorepo architecture for high-traffic web applications featuring Java Spring Boot and Node.js microservices.
+A robust Spring Boot microservice for handling core business logic, data management, and API orchestration in the my-app-backend monorepo.
 
-## Architecture
+## Overview
 
-This monorepo contains multiple backend services optimized for specific workloads:
-
-- **spring-main-service**: Java Spring Boot application handling core business logic and API orchestration
-- **node-recording-service**: Node.js service optimized for high-performance recording operations
+This service is built with Spring Boot 3.1.5 and provides:
+- RESTful API endpoints for business operations
+- JPA/Hibernate ORM for database operations
+- Spring Security with JWT authentication
+- Redis caching for high-performance operations
+- Health checks and monitoring via Spring Actuator
 
 ## Prerequisites
 
-- Docker & Docker Compose
-- Java 17+ (for Spring Boot service)
-- Node.js 18+ (for Node.js service)
-- Maven 3.8+ (for Java service)
-
-## Quick Start
-
-### Using Docker Compose
-
-```bash
-docker-compose up -d
-```
-
-This will:
-- Build and start the Spring Boot service on port 8080
-- Build and start the Node.js recording service on port 3000
-- Initialize required databases and dependencies
-
-### Local Development
-
-#### Spring Boot Service
-
-```bash
-cd spring-main-service
-mvn clean install
-mvn spring-boot:run
-```
-
-#### Node.js Service
-
-```bash
-cd node-recording-service
-npm install
-npm start
-```
-
-## Service Documentation
-
-### Spring Main Service
-
-- **Port**: 8080
-- **Framework**: Spring Boot
-- **Build Tool**: Maven
-- **Database**: PostgreSQL (configured in docker-compose)
-
-Key packages:
-- `controller`: REST API endpoints
-- `service`: Business logic and operations
-- `repository`: Data access layer
-- `entity`: JPA entities
-- `dto`: Data transfer objects
-- `config`: Spring configuration beans
-- `security`: Authentication and authorization
-
-See [spring-main-service/README.md](spring-main-service/README.md) for detailed documentation.
-
-### Node Recording Service
-
-- **Port**: 3000
-- **Framework**: Express.js
-- **Node Version**: 18+
-- **Use Case**: High-performance recording operations
-
-Key directories:
-- `routes`: API route definitions
-- `controllers`: Request handlers
-- `services`: Business logic
-- `middlewares`: Express middleware
-- `config`: Configuration management
-
-See [node-recording-service/README.md](node-recording-service/README.md) for detailed documentation.
-
-## CI/CD Pipeline
-
-GitHub Actions workflows are configured for independent service deployment:
-
-- **Deploy Spring Service**: Triggered on changes to `spring-main-service/**`
-- **Deploy Node Service**: Triggered on changes to `node-recording-service/**`
-
-Workflows are located in `.github/workflows/`.
+- Java 17+
+- Maven 3.8+
+- PostgreSQL 12+
+- Redis 6+
 
 ## Project Structure
 
 ```
-my-app-backend/
-├── spring-main-service/          # Java Spring Boot microservice
-│   ├── src/
-│   │   ├── main/java/com/app/
-│   │   │   ├── controller/       # REST controllers
-│   │   │   ├── service/          # Business logic
-│   │   │   ├── repository/       # Data access
-│   │   │   ├── entity/           # JPA entities
-│   │   │   ├── dto/              # DTOs
-│   │   │   ├── config/           # Spring config
-│   │   │   └── security/         # Auth & security
-│   │   ├── main/resources/       # Configuration files
-│   │   └── test/java/com/app/    # Unit tests
-│   ├── pom.xml                   # Maven configuration
-│   ├── Dockerfile                # Container image
-│   └── README.md
-├── node-recording-service/       # Node.js microservice
-│   ├── src/
-│   │   ├── routes/               # Route definitions
-│   │   ├── controllers/          # Request handlers
-│   │   ├── services/             # Business logic
-│   │   ├── middlewares/          # Middleware
-│   │   ├── config/               # Configuration
-│   │   └── index.js              # Entry point
-│   ├── package.json              # NPM dependencies
-│   ├── .env.example              # Environment template
-│   ├── Dockerfile                # Container image
-│   └── README.md
-├── .github/workflows/            # CI/CD workflows
-│   ├── deploy-spring-service.yml
-│   └── deploy-node-service.yml
-├── docker-compose.yml            # Local development orchestration
-├── .gitignore                    # Git ignore rules
-└── README.md                     # This file
+src/
+├── main/
+│   ├── java/com/app/
+│   │   ├── Application.java              # Spring Boot entry point
+│   │   ├── controller/                   # REST API endpoints
+│   │   ├── service/                      # Business logic layer
+│   │   ├── repository/                   # Data access layer (JPA)
+│   │   ├── entity/                       # JPA entity classes
+│   │   ├── dto/                          # Data Transfer Objects
+│   │   ├── config/                       # Spring configuration beans
+│   │   └── security/                     # Authentication & authorization
+│   └── resources/
+│       ├── application.yml               # Main configuration
+│       ├── application-docker.yml        # Docker environment config
+│       ├── application-dev.yml           # Development config
+│       └── application-prod.yml          # Production config
+└── test/
+    └── java/com/app/                     # Unit and integration tests
 ```
 
-## Environment Configuration
+## Getting Started
 
-Each service has its own environment configuration:
-
-- **Spring Service**: `spring-main-service/src/main/resources/application.yml`
-- **Node Service**: `node-recording-service/.env`
-
-## Deployment
-
-### Docker Compose (Development)
+### Build
 
 ```bash
-docker-compose up -d
+mvn clean install
 ```
 
-### Kubernetes (Production)
+### Run Locally
 
-Each service contains a `Dockerfile` suitable for Kubernetes deployments. Helm charts or kustomize manifests can be added as needed.
+1. Ensure PostgreSQL and Redis are running:
+```bash
+docker run --name postgres -e POSTGRES_PASSWORD=password -d postgres:15
+docker run --name redis -d redis:7
+```
 
-## Monitoring & Logging
+2. Run the application:
+```bash
+mvn spring-boot:run
+```
 
-- Spring Boot: Actuator endpoints available at `/actuator`
-- Node.js: Winston/Morgan logging configured
-- Docker Compose: View logs with `docker-compose logs -f [service-name]`
+The service will start on `http://localhost:8080`
+
+### Run with Docker
+
+```bash
+docker build -t spring-main-service .
+docker run -p 8080:8080 \
+  -e SPRING_DATASOURCE_URL=jdbc:postgresql://host.docker.internal:5432/myapp_db \
+  -e SPRING_DATASOURCE_USERNAME=appuser \
+  -e SPRING_DATASOURCE_PASSWORD=apppassword \
+  spring-main-service
+```
+
+Or use Docker Compose from the root directory:
+```bash
+docker-compose up spring-main-service
+```
+
+## Configuration
+
+Configuration files are located in `src/main/resources/`:
+
+- **application.yml**: Default configuration
+- **application-docker.yml**: Docker environment overrides
+- **application-dev.yml**: Development-specific settings
+- **application-prod.yml**: Production-specific settings
+
+### Key Environment Variables
+
+```
+SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/myapp_db
+SPRING_DATASOURCE_USERNAME=appuser
+SPRING_DATASOURCE_PASSWORD=apppassword
+SPRING_REDIS_HOST=localhost
+SPRING_REDIS_PORT=6379
+SPRING_PROFILES_ACTIVE=dev|docker|prod
+JWT_SECRET=your-secret-key
+JWT_EXPIRATION=86400000
+```
+
+## API Documentation
+
+### Health Check Endpoint
+
+```bash
+GET /actuator/health
+```
+
+### Application Info
+
+```bash
+GET /actuator/info
+```
+
+## Architecture
+
+### Controller Layer (`controller/`)
+- Handles HTTP requests and responses
+- Input validation
+- Exception handling
+
+### Service Layer (`service/`)
+- Business logic implementation
+- Transaction management
+- Caching logic
+
+### Repository Layer (`repository/`)
+- Database operations via Spring Data JPA
+- Custom query methods
+- Database abstraction
+
+### Entity Layer (`entity/`)
+- JPA entity models
+- Database table mappings
+- Relationships and constraints
+
+### DTO Layer (`dto/`)
+- Request/Response objects
+- Data validation annotations
+- API contract definitions
+
+### Config Layer (`config/`)
+- Spring beans configuration
+- Database configuration
+- Caching configuration
+- Security configuration
+
+### Security Layer (`security/`)
+- JWT token generation and validation
+- Authentication filters
+- Authorization configurations
+
+## Testing
+
+Run all tests:
+```bash
+mvn test
+```
+
+Run specific test class:
+```bash
+mvn test -Dtest=UserServiceTest
+```
+
+## Monitoring
+
+View application metrics and health:
+```bash
+curl http://localhost:8080/actuator/health
+curl http://localhost:8080/actuator/metrics
+```
+
+## Logging
+
+Logs are output to console and can be configured via `application.yml`:
+
+```yaml
+logging:
+  level:
+    root: INFO
+    com.app: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+```
+
+## Database Migrations
+
+Migrations can be managed using Flyway or Liquibase. Add the starter:
+
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-flyway</artifactId>
+</dependency>
+```
+
+Place migration scripts in `src/main/resources/db/migration/`
+
+## Performance Optimization
+
+- **Caching**: Redis integration for frequently accessed data
+- **Connection Pooling**: HikariCP for optimized database connections
+- **Async Processing**: Spring async support for non-blocking operations
+
+## Development Best Practices
+
+1. Keep controllers thin - move logic to services
+2. Use DTOs for external API contracts
+3. Implement proper exception handling
+4. Write unit tests for business logic
+5. Use Spring transactions for data consistency
+6. Log important operations for debugging
+
+## Troubleshooting
+
+### Port 8080 already in use
+```bash
+lsof -i :8080
+kill -9 <PID>
+```
+
+### Database connection issues
+- Verify PostgreSQL is running
+- Check connection string in configuration
+- Ensure database and user exist
+
+### Redis connection issues
+- Verify Redis is running on port 6379
+- Check Redis URL in configuration
 
 ## Contributing
 
-1. Create a feature branch for changes to a specific service
-2. Ensure CI/CD pipeline passes
-3. Submit pull request with changes isolated to the relevant service
+1. Create a feature branch
+2. Make changes following Spring Boot best practices
+3. Write tests for new functionality
+4. Ensure all tests pass: `mvn test`
+5. Submit pull request
 
 ## License
 
-See LICENSE file for details.
-
-## Support
-
-For issues or questions:
-1. Check service-specific documentation
-2. Review GitHub Actions logs for deployment issues
-3. Contact the development team
+See LICENSE file in the root directory.
