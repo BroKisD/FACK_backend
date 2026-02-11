@@ -8,15 +8,13 @@ This service is built with Spring Boot 3.1.5 and provides:
 - RESTful API endpoints for business operations
 - JPA/Hibernate ORM for database operations
 - Spring Security with JWT authentication
-- Redis caching for high-performance operations
 - Health checks and monitoring via Spring Actuator
 
 ## Prerequisites
 
 - Java 17+
 - Maven 3.8+
-- PostgreSQL 12+
-- Redis 6+
+- MySQL 8.0+
 
 ## Project Structure
 
@@ -51,10 +49,9 @@ mvn clean install
 
 ### Run Locally
 
-1. Ensure PostgreSQL and Redis are running:
+1. Ensure MySQL is running:
 ```bash
-docker run --name postgres -e POSTGRES_PASSWORD=password -d postgres:15
-docker run --name redis -d redis:7
+docker run --name mysql -e MYSQL_ROOT_PASSWORD=password -e MYSQL_DATABASE=myapp_db -d mysql:8.0
 ```
 
 2. Run the application:
@@ -69,9 +66,9 @@ The service will start on `http://localhost:8080`
 ```bash
 docker build -t spring-main-service .
 docker run -p 8080:8080 \
-  -e SPRING_DATASOURCE_URL=jdbc:postgresql://host.docker.internal:5432/myapp_db \
-  -e SPRING_DATASOURCE_USERNAME=appuser \
-  -e SPRING_DATASOURCE_PASSWORD=apppassword \
+  -e SPRING_DATASOURCE_URL=jdbc:mysql://host.docker.internal:3306/myapp_db \
+  -e SPRING_DATASOURCE_USERNAME=root \
+  -e SPRING_DATASOURCE_PASSWORD=password \
   spring-main-service
 ```
 
@@ -92,11 +89,9 @@ Configuration files are located in `src/main/resources/`:
 ### Key Environment Variables
 
 ```
-SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/myapp_db
-SPRING_DATASOURCE_USERNAME=appuser
-SPRING_DATASOURCE_PASSWORD=apppassword
-SPRING_REDIS_HOST=localhost
-SPRING_REDIS_PORT=6379
+SPRING_DATASOURCE_URL=jdbc:mysql://localhost:3306/myapp_db
+SPRING_DATASOURCE_USERNAME=root
+SPRING_DATASOURCE_PASSWORD=password
 SPRING_PROFILES_ACTIVE=dev|docker|prod
 JWT_SECRET=your-secret-key
 JWT_EXPIRATION=86400000
@@ -202,7 +197,6 @@ Place migration scripts in `src/main/resources/db/migration/`
 
 ## Performance Optimization
 
-- **Caching**: Redis integration for frequently accessed data
 - **Connection Pooling**: HikariCP for optimized database connections
 - **Async Processing**: Spring async support for non-blocking operations
 
@@ -224,13 +218,9 @@ kill -9 <PID>
 ```
 
 ### Database connection issues
-- Verify PostgreSQL is running
+- Verify MySQL is running on port 3306
 - Check connection string in configuration
-- Ensure database and user exist
-
-### Redis connection issues
-- Verify Redis is running on port 6379
-- Check Redis URL in configuration
+- Ensure database exists
 
 ## Contributing
 
