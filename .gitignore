@@ -1,0 +1,65 @@
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Eclipse
+.classpath
+.project
+.settings/
+.metadata
+
+# Netbeans
+nbproject/
+.nb-gradle/
+
+# Compiled classes
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Logging
+*.log
+logs/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build
+build/
+bin/
+dist/
+*.tmp
+
+# Node (if applicable)
+node_modules/
+package-lock.json
+yarn.lock
