@@ -3,6 +3,7 @@ package com.app.service;
 import com.app.dto.CourseDTO;
 import com.app.entity.Course;
 import com.app.repository.CourseRepository;
+import com.app.repository.CourseEnrollmentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 public class CourseService {
 
     private final CourseRepository courseRepository;
+    private final CourseEnrollmentRepository enrollmentRepository;
 
     // CREATE
     public CourseDTO createCourse(CourseDTO courseDTO) {
@@ -58,6 +60,19 @@ public class CourseService {
     // READ - Get by status
     public List<CourseDTO> getCoursesByStatus(String status) {
         return courseRepository.findByStatus(status)
+                .stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    // READ - Get courses by student
+    public List<CourseDTO> getCoursesByStudent(String studentId) {
+        List<String> courseIds = enrollmentRepository.findByStudentId(studentId)
+                .stream()
+                .map(enrollment -> enrollment.getCourseId())
+                .collect(Collectors.toList());
+        
+        return courseRepository.findAllById(courseIds)
                 .stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());

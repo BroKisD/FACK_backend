@@ -1,7 +1,9 @@
 package com.app.controller;
 
+import com.app.dto.CourseDTO;
 import com.app.dto.CourseEnrollmentDTO;
 import com.app.service.CourseEnrollmentService;
+import com.app.service.CourseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +17,7 @@ import java.util.List;
 public class CourseEnrollmentController {
 
     private final CourseEnrollmentService enrollmentService;
+    private final CourseService courseService;
 
     /**
      * Create enrollment
@@ -58,13 +61,13 @@ public class CourseEnrollmentController {
     }
 
     /**
-     * Get enrollments by student
+     * Get courses by student
      * GET /api/course-enrollments/by-student/{studentId}
      */
     @GetMapping("/by-student/{studentId}")
-    public ResponseEntity<List<CourseEnrollmentDTO>> getEnrollmentsByStudent(@PathVariable String studentId) {
-        List<CourseEnrollmentDTO> enrollments = enrollmentService.getEnrollmentsByStudent(studentId);
-        return ResponseEntity.ok(enrollments);
+    public ResponseEntity<List<CourseDTO>> getCoursesByStudent(@PathVariable String studentId) {
+        List<CourseDTO> courses = courseService.getCoursesByStudent(studentId);
+        return ResponseEntity.ok(courses);
     }
 
     /**

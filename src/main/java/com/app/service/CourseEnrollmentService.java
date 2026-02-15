@@ -12,19 +12,25 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Service
 @RequiredArgsConstructor
 public class CourseEnrollmentService {
-
+    
     private final CourseEnrollmentRepository enrollmentRepository;
+    private static final Logger logger = LoggerFactory.getLogger(CourseEnrollmentService.class);
 
     // CREATE
     public CourseEnrollmentDTO enrollStudent(CourseEnrollmentDTO enrollmentDTO) {
+        logger.info("Enrolling student: {}", enrollmentDTO);
         if (enrollmentDTO.getId() == null || enrollmentDTO.getId().isEmpty()) {
             enrollmentDTO.setId(UUID.randomUUID().toString());
         }
         CourseEnrollment enrollment = convertToEntity(enrollmentDTO);
         CourseEnrollment savedEnrollment = enrollmentRepository.save(enrollment);
+        // logger.info("Student enrolled successfully: {}", savedEnrollment);
         return convertToDTO(savedEnrollment);
     }
 
