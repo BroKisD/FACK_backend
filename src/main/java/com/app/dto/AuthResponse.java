@@ -1,31 +1,17 @@
 package com.app.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class AuthResponse {
-    private String token;
+    private String accessToken;
     private String tokenType;
     private String userId;
+    private String email;
+    private String name;
     private String role;
-
-    public AuthResponse(String token, String tokenType, String userId, String role) {
-        this.token = token;
-        this.tokenType = tokenType;
-        this.userId = userId;
-        this.role = role;
-    }
-
-    public String getToken() {
-        return token;
-    }
-
-    public String getTokenType() {
-        return tokenType;
-    }
-
-    public String getUserId() {
-        return userId;
-    }
-
-    public String getRole() {
-        return role;
-    }
 }

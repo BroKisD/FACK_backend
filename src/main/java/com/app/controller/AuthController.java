@@ -24,7 +24,14 @@ public class AuthController {
     public ResponseEntity<AuthResponse> login(@RequestBody AuthRequest request) {
         User user = authService.authenticate(request.getEmail(), request.getPassword());
         String token = jwtService.generateToken(user);
-        AuthResponse response = new AuthResponse(token, "Bearer", user.getId(), user.getRole());
+        AuthResponse response = new AuthResponse(
+                token, 
+                "Bearer",
+                user.getId(),
+                user.getEmail(),
+                user.getName(),
+                user.getRole()
+        );
         return ResponseEntity.ok(response);
     }
 }
