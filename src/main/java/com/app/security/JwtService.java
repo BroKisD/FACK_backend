@@ -8,65 +8,124 @@ import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import jakarta.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import javax.crypto.SecretKey;
 
 @Service
 public class JwtService {
 
-    private final String jwtSecret;
-    private final long expirationMinutes;
+    private final String accessSecret;
+    private final String refreshSecret;
+    private final String accessTtlRaw;
+    private final String refreshTtlRaw;
+
+    private Duration accessTtl;
+    private Duration refreshTtl;
 
     public JwtService(
-            @Value("${security.jwt.secret}") String jwtSecret,
-            @Value("${security.jwt.expiration-minutes:60}") long expirationMinutes) {
-        this.jwtSecret = jwtSecret;
-        this.expirationMinutes = expirationMinutes;
+            @Value("${security.jwt.access-secret:${JWT_ACCESS_SECRET:${security.jwt.secret}}}") String accessSecret,
+            @Value("${security.jwt.refresh-secret:${JWT_REFRESH_SECRET:${security.jwt.secret}}}") String refreshSecret,
+            @Value("${security.jwt.access-ttl:${ACCESS_TTL:15m}}") String accessTtlRaw,
+            @Value("${security.jwt.refresh-ttl:${REFRESH_TTL:7d}}") String refreshTtlRaw) {
+        this.accessSecret = accessSecret;
+        this.refreshSecret = refreshSecret;
+        this.accessTtlRaw = accessTtlRaw;
+        this.refreshTtlRaw = refreshTtlRaw;
     }
 
-    public String generateToken(User user) {
+    @PostConstruct
+    public void validateConfig() {
+        if (accessSecret == null || accessSecret.getBytes(StandardCharsets.UTF_8).length < 32) {
+            throw new IllegalStateException("JWT access secret must be at least 32 characters");
+        }
+        if (refreshSecret == null || refreshSecret.getBytes(StandardCharsets.UTF_8).length < 32) {
+            throw new IllegalStateException("JWT refresh secret must be at least 32 characters");
+        }
+        this.accessTtl = parseTtl(accessTtlRaw);
+        this.refreshTtl = parseTtl(refreshTtlRaw);
+    }
+
+    public String signAccessToken(User user) {
         Instant now = Instant.now();
-        Instant expiresAt = now.plus(expirationMinutes, ChronoUnit.MINUTES);
+        Instant expiresAt = now.plus(accessTtl);
 
         return Jwts.builder()
-                .setSubject(user.getEmail())
-                .claim("uid", user.getId())
+                .setSubject(user.getId())
+                .claim("email", user.getEmail())
                 .claim("role", user.getRole())
                 .setIssuedAt(Date.from(now))
                 .setExpiration(Date.from(expiresAt))
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .signWith(getSigningKey(accessSecret), SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    public String extractEmail(String token) {
-        return extractAllClaims(token).getSubject();
+    public String signRefreshToken(String userId, String sessionId) {
+        Instant now = Instant.now();
+        Instant expiresAt = now.plus(refreshTtl);
+
+        return Jwts.builder()
+                .setSubject(userId)
+                .setId(sessionId)
+                .setIssuedAt(Date.from(now))
+                .setExpiration(Date.from(expiresAt))
+                .signWith(getSigningKey(refreshSecret), SignatureAlgorithm.HS256)
+                .compact();
     }
 
-    public boolean isTokenValid(String token) {
+    public Claims verifyAccessToken(String token) {
+        return parseClaims(token, accessSecret);
+    }
+
+    public Claims verifyRefreshToken(String token) {
+        return parseClaims(token, refreshSecret);
+    }
+
+    public String extractUserIdFromAccessToken(String token) {
+        return verifyAccessToken(token).getSubject();
+    }
+
+    public boolean isAccessTokenValid(String token) {
         try {
-            extractAllClaims(token);
+            verifyAccessToken(token);
             return true;
-        } catch (Exception ex) {
+        } catch (Exception ignored) {
             return false;
         }
     }
 
-    private Claims extractAllClaims(String token) {
+    public Instant getRefreshTokenExpiryInstant() {
+        return Instant.now().plus(refreshTtl);
+    }
+
+    public Duration getRefreshTtl() {
+        return refreshTtl;
+    }
+
+    private Claims parseClaims(String token, String secret) {
         return Jwts.parser()
-                .verifyWith(getSigningKey())
+                .verifyWith(getSigningKey(secret))
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
     }
 
-    private SecretKey getSigningKey() {
-        byte[] keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
-        if (keyBytes.length < 32) {
-            throw new IllegalStateException("security.jwt.secret must be at least 32 characters");
-        }
+    private SecretKey getSigningKey(String secret) {
+        byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
         return Keys.hmacShaKeyFor(keyBytes);
+    }
+
+    private Duration parseTtl(String raw) {
+        if (raw == null || raw.isBlank()) return Duration.ofMinutes(15);
+        String value = raw.trim().toLowerCase();
+        if (value.endsWith("ms")) return Duration.ofMillis(Long.parseLong(value.substring(0, value.length() - 2)));
+        if (value.endsWith("s")) return Duration.ofSeconds(Long.parseLong(value.substring(0, value.length() - 1)));
+        if (value.endsWith("m")) return Duration.ofMinutes(Long.parseLong(value.substring(0, value.length() - 1)));
+        if (value.endsWith("h")) return Duration.ofHours(Long.parseLong(value.substring(0, value.length() - 1)));
+        if (value.endsWith("d")) return Duration.ofDays(Long.parseLong(value.substring(0, value.length() - 1)));
+        return Duration.ofSeconds(Long.parseLong(value));
     }
 }

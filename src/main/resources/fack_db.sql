@@ -56,7 +56,20 @@ CREATE TABLE `test_sessions` (
   `created_at` timestamp DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE `refresh_token_sessions` (
+  `id` VARCHAR(36) PRIMARY KEY,
+  `user_id` VARCHAR(36) NOT NULL,
+  `token_hash` VARCHAR(128) NOT NULL,
+  `expires_at` timestamp NOT NULL,
+  `revoked_at` timestamp NULL,
+  `ip_address` VARCHAR(100),
+  `user_agent` VARCHAR(500),
+  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE UNIQUE INDEX `course_enrollments_index_0` ON `course_enrollments` (`course_id`, `student_id`);
+CREATE INDEX `refresh_token_sessions_user_idx` ON `refresh_token_sessions` (`user_id`);
+CREATE INDEX `refresh_token_sessions_hash_idx` ON `refresh_token_sessions` (`token_hash`);
 
 ALTER TABLE `courses` ADD FOREIGN KEY (`professor_id`) REFERENCES `users` (`id`);
 
@@ -71,3 +84,4 @@ ALTER TABLE `exams` ADD FOREIGN KEY (`professor_id`) REFERENCES `users` (`id`);
 ALTER TABLE `test_sessions` ADD FOREIGN KEY (`test_id`) REFERENCES `exams` (`id`);
 
 ALTER TABLE `test_sessions` ADD FOREIGN KEY (`student_id`) REFERENCES `users` (`id`);
+ALTER TABLE `refresh_token_sessions` ADD FOREIGN KEY (`user_id`) REFERENCES `users` (`id`);
